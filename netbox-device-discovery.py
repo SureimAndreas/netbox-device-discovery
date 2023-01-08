@@ -27,9 +27,6 @@ def add_device_to_netbox(device_name):
         )
         return nb.dcim.devices.get(name=device_name).id
 
-
-    
-
 def add_interfaces_to_netbox(device_id, interfaces):
     nb = pynetbox.api(f'{NB_URL}',token=f'{API_TOKEN}')
     nb.http_session.verify = False
@@ -53,10 +50,8 @@ def main() -> None:
     for host in nm.all_hosts():
         hostname = nm[host]["hostnames"][0]["name"]
         if nm[host].state() == "up":
-            vendor = "Juniper"
-#            vendor = nm[host]["vendor"]["name"]
-#            if vendor in ["Juniper", "Cisco"]:
-#                devices.append(host)
+            vendor = nm[host]["vendor"]["name"]
+            
         # determine the device's operating system
         if vendor == "Juniper":
             os_type = "junos"
@@ -114,7 +109,5 @@ def main() -> None:
                     continue
                 print(f"\nInterface {local_interface_obj} on {hostname} and {remote_interface_obj} on {remote_device_obj} is already connected\n")
             
-
-
 if __name__ == "__main__":
     main()
