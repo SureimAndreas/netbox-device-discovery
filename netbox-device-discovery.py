@@ -4,8 +4,8 @@ from napalm import get_network_driver
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-API_TOKEN = "##################"
-NB_URL = "##################"
+API_TOKEN = "_TOKEN_"
+NB_URL = "https://_IP_ADDRESS_"
 
 def add_device_to_netbox(device_name):
     # create a new device in Netbox
@@ -14,11 +14,11 @@ def add_device_to_netbox(device_name):
 
     existing_device = nb.dcim.devices.get(name=device_name)
     if existing_device:
-        print(f"The device {device_name} already exists.. skipping..")
+        print(f"\nThe device {device_name} already exists.. skipping..")
         return existing_device.id
     else:
         # Define the attributes of the new device
-        print(f"Adding the device: {device_name} to netbox")
+        print(f"\nAdding the device: {device_name} to netbox")
         nb.dcim.devices.create(
         name=device_name,
         device_role=3,
@@ -27,6 +27,9 @@ def add_device_to_netbox(device_name):
         )
         return nb.dcim.devices.get(name=device_name).id
 
+
+    
+
 def add_interfaces_to_netbox(device_id, interfaces):
     nb = pynetbox.api(f'{NB_URL}',token=f'{API_TOKEN}')
     nb.http_session.verify = False
@@ -34,19 +37,23 @@ def add_interfaces_to_netbox(device_id, interfaces):
     for interface in interfaces:
         existing_interface = nb.dcim.interfaces.get(device=device_id, name=interface)
         if existing_interface is None:
-            print(f"The interface {interface} already exists.. skipping..")
-        else:
-            # create a new interface in Netbox
-            nb.dcim.interfaces.create(
-                name=interface,
-                device=device_id,
-                type="1000base-t"
-            )
+            try:
+                # create a new interface in Netbox
+                nb.dcim.interfaces.create(
+                    name=interface,
+                    device=device_id,
+                    type="1000base-t"
+                )
+                print(f"Adding interface: {interface}..")
+            except pynetbox.core.query.RequestError as error:
+                print(f"Interface {interface} already exists.. skipping")         
+            
+
 
 def main() -> None:
     # use Nmap to scan the network and get a list of active devices
     nm = nmap.PortScanner()
-    nm.scan(hosts="192.168.10.240/29", arguments="-sV")
+    nm.scan(hosts="_SUBNET/MASK_", arguments="-sV")
     for host in nm.all_hosts():
         hostname = nm[host]["hostnames"][0]["name"]
         if nm[host].state() == "up":
@@ -64,8 +71,8 @@ def main() -> None:
         driver = get_network_driver(os_type)        
         device_conn = driver(
             hostname=host,
-            username="######################",
-            password="######################",
+            username="_USERNAME_",
+            password="_PASSWORD_",
         )
         device_conn.open()
 
@@ -92,16 +99,21 @@ def main() -> None:
             nb.http_session.verify = False
             local_interface_obj = nb.dcim.interfaces.get(device_id=device_id,name=local_interface)
             remote_device_obj = nb.dcim.devices.get(name=remote_device_name)
+            try:
+                nb.dcim.interfaces.get(device_id=remote_device_obj.id, name=remote_interface)
+            except AttributeError:
+                continue
             remote_interface_obj = nb.dcim.interfaces.get(device_id=remote_device_obj.id, name=remote_interface)
             # create a connection between the local and remote interfaces
             try:
-                nb.dcim.cables.create(
-                termination_a_type="dcim.interface",
-                termination_a_id=local_interface_obj.id,
-                termination_b_type="dcim.interface",
-                termination_b_id=remote_interface_obj.id
-                )
-                print(f"\nCreating Cabling between {local_interface_obj} on {hostname} and {remote_interface_obj} on {remote_device_obj}!\n")
+                if local_interface_obj and remote_interface_obj:
+                    nb.dcim.cables.create(
+                    termination_a_type="dcim.interface",
+                    termination_a_id=local_interface_obj.id,
+                    termination_b_type="dcim.interface",
+                    termination_b_id=remote_interface_obj.id
+                    )
+                    print(f"\nCreating Cabling between {local_interface_obj} on {hostname} and {remote_interface_obj} on {remote_device_obj}!\n")
             except pynetbox.core.query.RequestError as e:
                 # code to handle the RequestError
                 if "already has a cable attached" in str(e):
@@ -109,5 +121,7 @@ def main() -> None:
                     continue
                 print(f"\nInterface {local_interface_obj} on {hostname} and {remote_interface_obj} on {remote_device_obj} is already connected\n")
             
+
+
 if __name__ == "__main__":
     main()
