@@ -72,10 +72,8 @@ def main() -> None:
     for host in nm.all_hosts():
         hostname = nm[host]["hostnames"][0]["name"]
         if nm[host].state() == "up":
-            vendor = "Juniper"
+            vendor = "Juniper" # just while testing, as nmap cant find vendor when the device is a vm in eve-ng
 #            vendor = nm[host]["vendor"]["name"]
-#            if vendor in ["Juniper", "Cisco"]:
-#                devices.append(host)
         # determine the device's operating system
         if vendor == "Juniper":
             os_type = "junos"
