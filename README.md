@@ -7,6 +7,8 @@ Currently supports Cisco IOS and JUNOS.
 
 Check https://napalm.readthedocs.io/en/latest/support/index.html#getters-support-matrix for what other devices that can be supported.
 
+Its important that the devices are in dns, or you have a hostname in the host file. (have not made any error handling for that yet)
+
 # Change these variables in the code before running it:
 API_TOKEN = "_TOKEN_"
 
