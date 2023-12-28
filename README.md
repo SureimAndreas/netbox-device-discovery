@@ -35,3 +35,5 @@ ge-0/0/1           -                   2c:6b:f5:57:7e:c0   ge-0/0/1           ve
 ge-0/0/2           -                   2c:6b:f5:57:7e:c0   ge-0/0/2           vennesla-pe1  
 
 Otherwise the port info would only show a port id.
+
+- Changes to come:
